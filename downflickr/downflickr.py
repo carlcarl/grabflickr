@@ -1,9 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import gevent
-from gevent import monkey
-monkey.patch_all()
+try:
+    import gevent
+except ImportError:
+    pass
+else:
+    from gevent import monkey
+    monkey.patch_all()
 import sys
 import os
 import md5
@@ -16,6 +20,7 @@ import requests
 
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 api_key = ''
 api_secret = ''
 url = 'http://flickr.com/services/rest/'
@@ -70,7 +75,6 @@ def init_logger():
     console.setLevel(logging.INFO)
     console.setFormatter(formatter)
     logger.addHandler(console)
-    logger.setLevel(logging.INFO)
 
 
 def get_photos_info(photoset_id):
@@ -151,6 +155,11 @@ def multiple_download_photos(photos):
 
 
 def event_download_photos(photos):
+    try:
+        assert gevent
+    except NameError:
+        logger.error('You need install gevent module. Aborting...')
+        sys.exit(1)
     global counter
     counter = multiprocessing.Value('i', len(photos))
     jobs = [gevent.spawn(download_photo, photo) for photo in photos]
@@ -170,9 +179,23 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '-s',
-        help='Photoset id'
+        help='The photoset id to be downloaded',
+        metavar='<photoset_id>'
+    )
+    parser.add_argument(
+        '-O',
+        default=1,
+        help=(
+            '0 for single process, '
+            '1 for multiprocess, '
+            '2 for event driven, '
+            'Default: 1'
+        ),
+        type=int,
+        metavar='<num>'
     )
     args = parser.parse_args()
+    logger.debug(args)
 
     read_config()
     photoset_id = args.s
@@ -180,9 +203,15 @@ def main():
     directory = photoset_id
     photos = get_photos_info(photoset_id)
     create_dir(photoset_id)
-    # single_download_photos(photos)
-    # multiple_download_photos(photos)
-    event_download_photos(photos)
+
+    if args.O == 0:
+        single_download_photos(photos)
+    elif args.O == 1:
+        multiple_download_photos(photos)
+    elif args.O == 2:
+        event_download_photos(photos)
+    else:
+        logger.error('Invalid number')
 
 
 if __name__ == '__main__':
