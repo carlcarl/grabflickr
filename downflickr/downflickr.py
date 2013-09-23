@@ -187,6 +187,15 @@ def main():
         metavar='<num>'
     )
     parser.add_argument(
+        '-d',
+        help=(
+            'The path to store the downloaded images. '
+            'Automatically create it if not exist. '
+            'Default use the photoset id as folder name under current path'
+        ),
+        metavar='<path>'
+    )
+    parser.add_argument(
         '-O',
         default=2,
         help=(
@@ -208,8 +217,9 @@ def main():
     photoset_id = args.g
     photos = flickr.get_photos_info(photoset_id)
     flickr.image_size_mode = args.s
-    flickr.directory = photoset_id
-    flickr.create_dir(photoset_id)
+    d = args.d if args.d else photoset_id
+    flickr.directory = d
+    flickr.create_dir(d)
 
     if args.O == 0:
         flickr.single_download_photos(photos)
