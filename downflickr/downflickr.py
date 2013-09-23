@@ -7,7 +7,8 @@ except ImportError:
     pass
 else:
     from gevent import monkey
-    monkey.patch_all()
+    # Workround for multiprocess download method
+    monkey.patch_all(socket=False, thread=False, time=False)
 import sys
 import os
 import md5
@@ -274,6 +275,7 @@ def main():
             logger.warn('gevent not exist, fallback to multiprocess...')
             multiple_download_photos(photos)
         else:
+            monkey.patch_all()
             event_download_photos(photos)
     else:
         logger.error('Unknown Error')
