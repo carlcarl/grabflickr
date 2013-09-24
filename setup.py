@@ -5,19 +5,19 @@ with open('requirements.txt') as f:
     required = f.read().splitlines()
 
 setup(
-    name='downflickr',
+    name='grabflickr',
     description='Download photoset of flickr using gevent',
     long_description=open('README.rst').read(),
     version='0.0.1',
     author='carlcarl',
     author_email='carlcarlking@gmail.com',
-    url='https://github.com/carlcarl/downflickr',
+    url='https://github.com/carlcarl/grabflickr',
     packages=find_packages(),
     install_requires=required,
     license='MIT',
     entry_points={
         'console_scripts': [
-            'downflickr = downflickr.downflickr:main',
+            'gf = grabflickr.grabflickr:main',
         ]
     },
 

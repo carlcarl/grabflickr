@@ -1,6 +1,7 @@
 *.swp
 *.pyc
 *.conf
+*.sh
 .ropeproject/
 build/
 dist/

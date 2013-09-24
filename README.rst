@@ -1,4 +1,4 @@
-downflickr
+grabflickr
 ==========
 Download photoset of flickr using gevent(Asynchronous I/O)
 
@@ -30,10 +30,10 @@ Usage
 ::
 
     # Enter your api key
-    downflickr -u
+    grabflickr -u
 
     # Download photoset
-    downflickr -g xxx
+    grabflickr -g xxx
 
 Method Benchmark(min:sec)
 ----------------------------

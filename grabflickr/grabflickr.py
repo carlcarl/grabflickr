@@ -26,7 +26,7 @@ url = 'http://flickr.com/services/rest/'
 directory = ''
 image_size_mode = 1
 counter = 0
-CONFIG_PATH = os.path.expanduser('~/.downflickr.conf')
+CONFIG_PATH = os.path.expanduser('~/.grabflickr.conf')
 api_key = ''
 api_secret = ''
 
