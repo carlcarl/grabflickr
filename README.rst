@@ -30,10 +30,10 @@ Usage
 ::
 
     # Enter your api key
-    grabflickr -u
+    gf -u
 
     # Download photoset
-    grabflickr -g xxx
+    gf -g xxx
 
 Method Benchmark(min:sec)
 ----------------------------
