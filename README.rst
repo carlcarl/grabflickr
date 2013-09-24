@@ -33,7 +33,7 @@ Usage
     gf -u
 
     # Download photoset
-    gf -g xxx
+    gf -g <photoset id>
 
 Method Benchmark(min:sec)
 ----------------------------
