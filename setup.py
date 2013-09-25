@@ -6,7 +6,7 @@ with open('requirements.txt') as f:
 
 setup(
     name='grabflickr',
-    description='Download photoset of flickr using gevent',
+    description='Download photoset of flickr, support single process, multiprocess and gevent(Asynchronous I/O)',
     long_description=open('README.rst').read(),
     version='0.0.1',
     author='carlcarl',

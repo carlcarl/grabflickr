@@ -1,6 +1,6 @@
 grabflickr
 ==========
-Download photoset of flickr using gevent(Asynchronous I/O)
+Download photoset of flickr, support single process, multiprocess and gevent(Asynchronous I/O)
 
 Installation
 ------------
@@ -15,6 +15,8 @@ or::
 
 gevent
 ~~~~~~
+
+Notice: Without libevent, grabflickr will fallback to normal multiprocess download
 
 In Mac
 ++++++
