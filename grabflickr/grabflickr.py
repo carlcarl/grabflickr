@@ -281,12 +281,13 @@ def main():
     if args.O == GEVENT:
         args.O = _gevent_patch()
 
-    read_config()
     set_image_size_mode(args.s)
     photoset_id = args.g
-    photos = get_photos_info(photoset_id)
     global directory
     directory = args.d if args.d else photoset_id
+
+    read_config()
+    photos = get_photos_info(photoset_id)
     create_dir(directory)
 
     if args.O == SINGLE_PROCESS:
