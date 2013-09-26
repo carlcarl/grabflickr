@@ -8,7 +8,7 @@ setup(
     name='grabflickr',
     description='Download photoset of flickr, support single process, multiprocess and gevent(Asynchronous I/O)',
     long_description=open('README.rst').read(),
-    version='0.0.1',
+    version='0.0.2',
     author='carlcarl',
     author_email='carlcarlking@gmail.com',
     url='https://github.com/carlcarl/grabflickr',

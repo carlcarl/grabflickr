@@ -1,0 +1,9 @@
+0.0.2
+-----
+* Fix gevent download complete error
+* Remove the version with required modules
+
+0.0.1
+------
+* Initial release.
+

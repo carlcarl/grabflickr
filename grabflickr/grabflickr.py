@@ -7,8 +7,6 @@ except ImportError:
     pass
 else:
     from gevent import monkey
-    # Workround for multiprocess download method
-    monkey.patch_all(socket=False, thread=False, time=False)
 import sys
 import os
 import md5
@@ -29,6 +27,10 @@ counter = 0
 CONFIG_PATH = os.path.expanduser('~/.grabflickr.conf')
 api_key = ''
 api_secret = ''
+
+SINGLE_PROCESS = 0
+MULTIPROCESS = 1
+GEVENT = 2
 
 
 def read_config():
@@ -145,7 +147,7 @@ def download_photo(photo):
     photo_format = download_url.split('.')[-1]
     photo_title = photo_title + '.' + photo_format
     file_path = directory + os.sep + photo_title
-    logger.info('Download {photo_title}...'.format(photo_title=photo_title))
+    logger.info('Download {photo_title}...'.format(photo_title=photo_title.encode('utf-8')))
     resp = requests.get(download_url)
     with open(file_path, 'w') as f:
         f.write(resp.content)
@@ -190,7 +192,7 @@ def event_download_photos(photos):
     gevent.joinall(jobs)
 
 
-def _init_logger():
+def init_logger():
     formatter = logging.Formatter('%(levelname)s: %(message)s')
     console = logging.StreamHandler(stream=sys.stdout)
     console.setLevel(logging.INFO)
@@ -198,8 +200,7 @@ def _init_logger():
     logger.addHandler(console)
 
 
-def main():
-    _init_logger()
+def _parse_cli_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '-g',
@@ -249,34 +250,51 @@ def main():
     )
     args = parser.parse_args()
     logger.debug(args)
+    return args
+
+
+def set_image_size_mode(s):
+    global image_size_mode
+    image_size_mode = s
+
+
+def _gevent_patch():
+    try:
+        assert gevent
+    except NameError:
+        logger.warn('gevent not exist, fallback to multiprocess...')
+        return MULTIPROCESS
+    else:
+        monkey.patch_all()  # Must patch before get_photos_info
+        return GEVENT
+
+
+def main():
+
+    init_logger()
+    args = _parse_cli_args()
 
     if args.u:
         enter_api_key()
         return
-    read_config()
 
+    if args.O == GEVENT:
+        args.O = _gevent_patch()
+
+    read_config()
+    set_image_size_mode(args.s)
     photoset_id = args.g
     photos = get_photos_info(photoset_id)
-    global image_size_mode
-    image_size_mode = args.s
-    d = args.d if args.d else photoset_id
     global directory
-    directory = d
-    create_dir(d)
+    directory = args.d if args.d else photoset_id
+    create_dir(directory)
 
-    if args.O == 0:
+    if args.O == SINGLE_PROCESS:
         single_download_photos(photos)
-    elif args.O == 1:
+    elif args.O == MULTIPROCESS:
         multiple_download_photos(photos)
-    elif args.O == 2:
-        try:
-            assert gevent
-        except NameError:
-            logger.warn('gevent not exist, fallback to multiprocess...')
-            multiple_download_photos(photos)
-        else:
-            monkey.patch_all()
-            event_download_photos(photos)
+    elif args.O == GEVENT:
+        event_download_photos(photos)
     else:
         logger.error('Unknown Error')
 
