@@ -3,6 +3,7 @@
 *.conf
 *.sh
 .ropeproject/
+.idea
 build/
 dist/
 *.egg-info/
