@@ -9,7 +9,7 @@ else:
     from gevent import monkey
 import sys
 import os
-import md5
+import hashlib
 import json
 import logging
 import argparse
@@ -94,8 +94,8 @@ def _get_api_sig(args):
     tmp_sig = api_secret
     for i in args:
         tmp_sig = tmp_sig + i[0] + i[1]
-    api_sig = md5.new(tmp_sig.encode('utf-8')).hexdigest()
-    return ('api_sig', api_sig)
+    api_sig = hashlib.md5.new(tmp_sig.encode('utf-8')).hexdigest()
+    return 'api_sig', api_sig
 
 
 def create_dir(path):
