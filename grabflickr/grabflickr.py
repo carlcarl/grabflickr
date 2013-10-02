@@ -34,6 +34,10 @@ GEVENT = 2
 
 
 def read_config():
+    """Read the config from CONFIG_PATH(Default: ~/.grabflickr.conf)
+    This will prompt for API key and secret if it not exists.
+    After, it sets the global variable `api_key` and `api_secret`.
+    """
     parser = SafeConfigParser()
     parser.read(CONFIG_PATH)
     if not parser.has_section('flickr'):
@@ -45,6 +49,12 @@ def read_config():
 
 
 def enter_api_key(parser=None):
+    """Prompt for API key and secret
+    Then write them to CONFIG_PATH(Default: ~/.grabflickr.conf)
+
+    :param parser: Config parser
+    :type parser: SafeConfigParser
+    """
     if parser is None:
         parser = SafeConfigParser()
     parser.add_section('flickr')
@@ -56,18 +66,18 @@ def enter_api_key(parser=None):
     with open(CONFIG_PATH, 'wb') as f:
         parser.write(f)
 
-
 def _get_request_args(method, **kwargs):
-    '''
-    Use `method` and other settings to produce a flickr API arguments.
+    """Use `method` and other settings to produce a flickr API arguments.
     Here also use json as the return type.
-    Args:
-        method: The method string provided by flickr,
+
+    :param method: The method provided by flickr,
             ex: flickr.photosets.getPhotos
-        **kwargs: Other settings
-    Returns:
-        args: An argument list used for post request
-    '''
+    :type method: str
+    :param kwargs: Other settings
+    :type kwargs: dict
+    :return: An argument list used for post request
+    :rtype: list of sets
+    """
     args = [
         ('api_key', api_key),
         ('format', 'json'),
@@ -84,13 +94,13 @@ def _get_request_args(method, **kwargs):
 
 
 def _get_api_sig(args):
-    '''
-    Flickr API need a hash string which made using post arguments
-    Args:
-        args: Post args(list)
-    Returns:
-        api_sig: A tuple of api_sig, ex: ('api_sig', 'abcdefg')
-    '''
+    """Flickr API need a hash string which made using post arguments
+
+    :param args: Arguments of the flickr request
+    :type args: list of sets
+    :return: api_sig, ex: ('api_sig', 'abcdefg')
+    :rtype: tuple
+    """
     tmp_sig = api_secret
     for i in args:
         tmp_sig = tmp_sig + i[0] + i[1]
@@ -99,6 +109,11 @@ def _get_api_sig(args):
 
 
 def create_dir(path):
+    """Create dir with the path
+
+    :param path: The path to be created
+    :type path: str
+    """
     if os.path.exists(path):
         if not os.path.isdir(path):
             logger.error('{path} is not a directory'.format(path=path))
@@ -111,6 +126,13 @@ def create_dir(path):
 
 
 def get_photos_info(photoset_id):
+    """Request the photos information with the photoset id
+
+    :param photoset_id: The photoset id of flickr
+    :type photoset_id: str
+    :return: photos information
+    :rtype: list
+    """
     args = _get_request_args(
         'flickr.photosets.getPhotos',
         photoset_id=photoset_id
@@ -123,6 +145,12 @@ def get_photos_info(photoset_id):
 
 
 def get_photo_url(photo_id):
+    """Request the photo download url with the photo id
+    :param photo_id: The photo id of flickr
+    :type photo_id: str
+    :return: Photo download url
+    :rtype: str
+    """
     args = _get_request_args(
         'flickr.photos.getSizes',
         photo_id=photo_id
@@ -140,6 +168,10 @@ def get_photo_url(photo_id):
 
 
 def download_photo(photo):
+    """Download a photo to the the path(global varialbe `directory`)
+    :param photo: The photo information include id and title
+    :type photo: dict
+    """
     counter_lock = multiprocessing.Lock()
     photo_id = photo['id']
     photo_title = photo['title']
@@ -160,6 +192,11 @@ def download_photo(photo):
 
 
 def single_download_photos(photos):
+    """Use single process to download photos
+
+    :param photos: The photos to be downloaded
+    :type photos: list of dicts
+    """
     global counter
     counter = multiprocessing.Value('i', len(photos))
     for photo in photos:
@@ -167,6 +204,11 @@ def single_download_photos(photos):
 
 
 def multiple_download_photos(photos):
+    """Use multiple processes to download photos
+
+    :param photos: The photos to be downloaded
+    :type photos: list of dicts
+    """
     def init(args):
         global counter
         counter = args
@@ -181,6 +223,11 @@ def multiple_download_photos(photos):
 
 
 def event_download_photos(photos):
+    """Use asynchronous I/O to download photos
+
+    :param photos: The photos to be downloaded
+    :type photos: list of dicts
+    """
     try:
         assert gevent
     except NameError:
@@ -193,6 +240,8 @@ def event_download_photos(photos):
 
 
 def init_logger():
+    """Initialize the logger and set its format
+    """
     formatter = logging.Formatter('%(levelname)s: %(message)s')
     console = logging.StreamHandler(stream=sys.stdout)
     console.setLevel(logging.INFO)
@@ -201,6 +250,10 @@ def init_logger():
 
 
 def _parse_cli_args():
+    """Parse the arguments from CLI using ArgumentParser
+    :return: The arguments parsed by ArgumentParser
+    :rtype: Namespace
+    """
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '-g',
@@ -254,11 +307,22 @@ def _parse_cli_args():
 
 
 def set_image_size_mode(s):
+    """Set the quality of the images to be downloaded
+    This set the global variable `image_size_mode`
+
+    :param s: quality level, 1 is original size, 12 is smallest
+    :type s: str
+    """
     global image_size_mode
     image_size_mode = s
 
 
 def _gevent_patch():
+    """Patch the modules with gevent
+
+    :return: Default is GEVENT. If it not supports gevent then return MULTIPROCESS
+    :rtype: int
+    """
     try:
         assert gevent
     except NameError:
@@ -270,6 +334,8 @@ def _gevent_patch():
 
 
 def main():
+    """The main procedure
+    """
 
     init_logger()
     args = _parse_cli_args()
