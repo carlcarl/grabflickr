@@ -66,6 +66,7 @@ def enter_api_key(parser=None):
     with open(CONFIG_PATH, 'wb') as f:
         parser.write(f)
 
+
 def _get_request_args(method, **kwargs):
     """Use `method` and other settings to produce a flickr API arguments.
     Here also use json as the return type.
@@ -116,13 +117,13 @@ def create_dir(path):
     """
     if os.path.exists(path):
         if not os.path.isdir(path):
-            logger.error('{path} is not a directory'.format(path=path))
+            logger.error('%s is not a directory', path)
             sys.exit(1)
         else:  # ignore
             pass
     else:
         os.makedirs(path)
-        logger.info('Create dir: {dir}'.format(dir=path))
+        logger.info('Create dir: %s', path)
 
 
 def get_photos_info(photoset_id):
@@ -179,7 +180,7 @@ def download_photo(photo):
     photo_format = download_url.split('.')[-1]
     photo_title = photo_title + '.' + photo_format
     file_path = directory + os.sep + photo_title
-    logger.info('Download {photo_title}...'.format(photo_title=photo_title.encode('utf-8')))
+    logger.info('Download %s...', photo_title.encode('utf-8'))
     resp = requests.get(download_url)
     with open(file_path, 'w') as f:
         f.write(resp.content)
@@ -187,7 +188,7 @@ def download_photo(photo):
             global counter
             counter.value -= 1
         logger.info(
-            'The number of pictures remaining: {num}'.format(num=counter.value)
+            'The number of pictures remaining: %s', counter.value
         )
 
 
