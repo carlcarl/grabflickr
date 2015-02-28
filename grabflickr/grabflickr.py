@@ -105,7 +105,7 @@ def _get_api_sig(args):
     tmp_sig = api_secret
     for i in args:
         tmp_sig = tmp_sig + i[0] + i[1]
-    api_sig = hashlib.md5.new(tmp_sig.encode('utf-8')).hexdigest()
+    api_sig = hashlib.md5(tmp_sig.encode('utf-8')).hexdigest()
     return 'api_sig', api_sig
 
 
