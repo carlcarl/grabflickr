@@ -3,6 +3,7 @@
 
 try:
     import gevent
+    import grequests
 except ImportError:
     pass
 else:
@@ -20,7 +21,8 @@ import requests
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
-url = 'http://flickr.com/services/rest/'
+API_URL = 'https://flickr.com/services/rest/'
+
 directory = ''
 image_size_mode = 1
 counter = 0
@@ -29,7 +31,7 @@ api_key = ''
 api_secret = ''
 
 SINGLE_PROCESS = 0
-MULTIPROCESS = 1
+MULTITHREAD = 1
 GEVENT = 2
 
 
@@ -138,7 +140,7 @@ def get_photos_info(photoset_id):
         'flickr.photosets.getPhotos',
         photoset_id=photoset_id
     )
-    resp = requests.post(url, data=args)
+    resp = requests.post(API_URL, data=args)
     resp_json = json.loads(resp.text.encode('utf-8'))
     logger.debug(resp_json)
     photos = resp_json['photoset']['photo']
@@ -156,7 +158,7 @@ def get_photo_url(photo_id):
         'flickr.photos.getSizes',
         photo_id=photo_id
     )
-    resp = requests.post(url, data=args)
+    resp = requests.post(API_URL, data=args)
     resp_json = json.loads(resp.text.encode('utf-8'))
     logger.debug(json.dumps(resp_json, indent=2))
     size_list = resp_json['sizes']['size']
@@ -166,6 +168,31 @@ def get_photo_url(photo_id):
         else image_size_mode
     download_url = resp_json['sizes']['size'][-image_size_mode]['source']
     return download_url
+
+
+def download_photo_async(photo):
+    """Download a photo to the the path(global varialbe `directory`)
+    :param photo: The photo information include id and title
+    :type photo: dict
+    """
+    photo_id = photo['id']
+    photo_title = photo['title']
+    download_url = get_photo_url(photo_id)
+    photo_format = download_url.split('.')[-1]
+    photo_title = photo_title + '.' + photo_format
+    file_path = directory + os.sep + photo_title
+    logger.info('Download %s...', photo_title.encode('utf-8'))
+    req = [grequests.get(download_url)]
+    counter_lock = multiprocessing.Lock()
+    for resp in grequests.map(req):
+        with open(file_path, 'w') as f:
+            f.write(resp.content)
+            with counter_lock:
+                global counter
+                counter -= 1
+        logger.info(
+            'The number of pictures remaining: %s', counter
+        )
 
 
 def download_photo(photo):
@@ -186,9 +213,9 @@ def download_photo(photo):
         f.write(resp.content)
         with counter_lock:
             global counter
-            counter.value -= 1
+            counter -= 1
         logger.info(
-            'The number of pictures remaining: %s', counter.value
+            'The number of pictures remaining: %s', counter
         )
 
 
@@ -199,28 +226,9 @@ def single_download_photos(photos):
     :type photos: list of dicts
     """
     global counter
-    counter = multiprocessing.Value('i', len(photos))
+    counter = len(photos)
     for photo in photos:
         download_photo(photo)
-
-
-def multiple_download_photos(photos):
-    """Use multiple processes to download photos
-
-    :param photos: The photos to be downloaded
-    :type photos: list of dicts
-    """
-    def init(args):
-        global counter
-        counter = args
-    file_num = multiprocessing.Value('i', len(photos))
-    pool = multiprocessing.Pool(
-        initializer=init,
-        initargs=(file_num, )
-    )
-    pool.map(download_photo, photos)
-    pool.close()
-    pool.join()
 
 
 def event_download_photos(photos):
@@ -231,13 +239,31 @@ def event_download_photos(photos):
     """
     try:
         assert gevent
+        assert grequests
     except NameError:
         logger.error('You need install gevent module. Aborting...')
         sys.exit(1)
     global counter
-    counter = multiprocessing.Value('i', len(photos))
-    jobs = [gevent.spawn(download_photo, photo) for photo in photos]
-    gevent.joinall(jobs)
+    counter = len(photos)
+    from gevent.pool import Pool
+    pool = Pool(multiprocessing.cpu_count())
+    jobs = [pool.spawn(download_photo_async, photo) for photo in photos]
+    pool.join()
+
+
+def multithread_download_photos(photos):
+    """Use multiple threads to download photos
+
+    :param photos: The photos to be downloaded
+    :type photos: list of dicts
+    """
+    from concurrent import futures
+    global counter
+    counter = len(photos)
+    cpu_num = multiprocessing.cpu_count()
+    with futures.ThreadPoolExecutor(max_workers=cpu_num) as executor:
+        for photo in photos:
+            executor.submit(download_photo, photo)
 
 
 def init_logger():
@@ -284,12 +310,12 @@ def _parse_cli_args():
     )
     parser.add_argument(
         '-O',
-        default=2,
+        default=1,
         help=(
             '0 for single process, '
-            '1 for multiprocess, '
+            '1 for multithread. '
             '2 for event driven. '
-            'Default: 2'
+            'Default: 1'
         ),
         type=int,
         choices=xrange(0, 3),
@@ -321,14 +347,15 @@ def set_image_size_mode(s):
 def _gevent_patch():
     """Patch the modules with gevent
 
-    :return: Default is GEVENT. If it not supports gevent then return MULTIPROCESS
+    :return: Default is GEVENT. If it not supports gevent then return MULTITHREAD
     :rtype: int
     """
     try:
         assert gevent
+        assert grequests
     except NameError:
         logger.warn('gevent not exist, fallback to multiprocess...')
-        return MULTIPROCESS
+        return MULTITHREAD
     else:
         monkey.patch_all()  # Must patch before get_photos_info
         return GEVENT
@@ -359,10 +386,10 @@ def main():
 
     if args.O == SINGLE_PROCESS:
         single_download_photos(photos)
-    elif args.O == MULTIPROCESS:
-        multiple_download_photos(photos)
     elif args.O == GEVENT:
         event_download_photos(photos)
+    elif args.O == MULTITHREAD:
+        multithread_download_photos(photos)
     else:
         logger.error('Unknown Error')
 

@@ -2,3 +2,4 @@ gevent
 greenlet
 requests
 wsgiref
+grequests
