@@ -41,7 +41,7 @@ Usage
     # Download photoset
     gf -g <photoset id>
 
-Method Benchmark(min:sec)
+Method Benchmark(sec)
 ----------------------------
 
 :: 
