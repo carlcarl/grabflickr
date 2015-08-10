@@ -55,7 +55,7 @@ single multiprocess
 ~~~~~~~~~~~~~~~~~~~
 * 31.37
 
-multiprocess
+multithread
 ~~~~~~~~~~~~
 * 9.91
 * 8.24
