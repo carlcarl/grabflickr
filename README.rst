@@ -6,11 +6,11 @@ Installation
 ------------
 ::
 
-	sudo python setup.py install
+	python setup.py install
 
 or::
 
-    sudo pip install grabflickr
+    pip install grabflickr
 
 
 gevent
@@ -40,6 +40,9 @@ Usage
 
     # Download photoset
     gf -g <photoset id>
+
+    # For more usages, type:
+    gf -h
 
 Method Benchmark(sec)
 ----------------------------
