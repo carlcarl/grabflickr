@@ -172,6 +172,7 @@ def get_photo_url(photo_id):
 
 def download_photo_async(photo):
     """Download a photo to the the path(global varialbe `directory`)
+
     :param photo: The photo information include id and title
     :type photo: dict
     """
@@ -197,6 +198,7 @@ def download_photo_async(photo):
 
 def download_photo(photo):
     """Download a photo to the the path(global varialbe `directory`)
+
     :param photo: The photo information include id and title
     :type photo: dict
     """
